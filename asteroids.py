@@ -1,3 +1,4 @@
+#!/bin/python
 # Asteroids game!!
 import pygame, sys, math, random
 from pygame.locals import *
