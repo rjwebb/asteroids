@@ -59,35 +59,28 @@ class PausedWorld(object):
     def update(self):
         pass
 
-class IntroWorld(PausedWorld):
-    def __init__(self,game,surface):
-        super(IntroWorld,self).__init__(game,surface)
+class TitleWorld(PausedWorld):
+    def __init__(self,game,surface,text):
+        super(TitleWorld,self).__init__(game,surface)
         
         self.titleFont = pygame.font.Font(None,36)
-        self.drawTitle()
+        self.drawTitle(text)
 
-    def drawTitle(self):
-        self.surface.blit(self.titleFont.render("Asteroids!! By Bob Webb", False, greenColor),(200,200))
+    def drawTitle(self,text):
+        self.surface.blit(self.titleFont.render(text, False, greenColor),(200,200))
 
-class YouLoseWorld(PausedWorld):
+class IntroWorld(TitleWorld):
     def __init__(self,game,surface):
-        super(YouLoseWorld,self).__init__(game,surface)
+        super(IntroWorld,self).__init__(game,surface,"Asteroids!! By Bob Webb")
         
-        self.titleFont = pygame.font.Font(None,36)
-        self.drawTitle()
 
-    def drawTitle(self):
-        self.surface.blit(self.titleFont.render("You Lose!!! Loser. :D", False, greenColor),(200,200))
-
-class YouWinWorld(PausedWorld):
+class YouLoseWorld(TitleWorld):
     def __init__(self,game,surface):
-        super(YouWinWorld,self).__init__(game,surface)
-        
-        self.titleFont = pygame.font.Font(None,36)
-        self.drawTitle()
+        super(YouLoseWorld,self).__init__(game,surface,"You Lose!!! Loser. :D")
 
-    def drawTitle(self):
-        self.surface.blit(self.titleFont.render("You Win!! <3", False, greenColor),(200,200))
+class YouWinWorld(TitleWorld):
+    def __init__(self,game,surface):
+        super(YouWinWorld,self).__init__(game,surface,"You Win!!! Yay.")
 
 class GameWorld(object):
     def __init__(self,game,surface):
