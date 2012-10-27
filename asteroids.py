@@ -174,7 +174,6 @@ class GameWorld(object):
             for i,x in enumerate(self.asteroids):
                 x.update()
 
-
 class Actor(object):
     def __init__(self,world,(x,y),(speed,direction)):
         self.world = world
