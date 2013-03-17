@@ -13,7 +13,7 @@ blackColor = pygame.Color(0,0,0)
 
 windowSurfObj = pygame.display.set_mode((640,480))
 
-pygame.display.set_caption("Asteroids!")
+pygame.display.set_caption("Asteroids")
 
 windowSurfObj.fill(blackColor)
 
@@ -72,16 +72,16 @@ class TitleWorld(PausedWorld):
 
 class IntroWorld(TitleWorld):
     def __init__(self,game,surface):
-        super(IntroWorld,self).__init__(game,surface,"Asteroids!! By Bob Webb")
+        super(IntroWorld,self).__init__(game,surface,"Asteroids! By Bob Webb")
         
 
 class YouLoseWorld(TitleWorld):
     def __init__(self,game,surface):
-        super(YouLoseWorld,self).__init__(game,surface,"You Lose!!! Loser. :D")
+        super(YouLoseWorld,self).__init__(game,surface,"You Lose!")
 
 class YouWinWorld(TitleWorld):
     def __init__(self,game,surface):
-        super(YouWinWorld,self).__init__(game,surface,"You Win!!! Yay.")
+        super(YouWinWorld,self).__init__(game,surface,"You Win! Congratulations.")
 
 class GameWorld(object):
     def __init__(self,game,surface):
@@ -148,7 +148,7 @@ class GameWorld(object):
             for j,a in enumerate(self.asteroids):
                 dist = math.sqrt((v[0]+self.spaceship.x-a.x)**2+(v[1]+self.spaceship.y-a.y)**2)
                 if dist < a.size:
-                    print "YOU LOOOOSE"
+                    #print "YOU LOOOOSE"
                     self.game.youLose()
         
         for i,b in enumerate(self.bullets):
