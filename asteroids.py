@@ -3,6 +3,8 @@
 import pygame, sys, math, random
 from pygame.locals import *
 
+import numpy as np
+
 pygame.init()
 fpsClock = pygame.time.Clock()
 
@@ -31,12 +33,13 @@ def check (font, name):
     print "%s at %s is %s" % (name, font, bold)
 
 class Game(object):
-    def __init__(self,surface):
+    def __init__(self,surface,easyMode=False):
         self.surface = surface
         self.currentWorld = IntroWorld(self,self.surface)
+        self.easyMode = easyMode
 
     def startGame(self):
-        self.currentWorld = GameWorld(self,self.surface)
+        self.currentWorld = GameWorld(self,self.surface,easyMode=self.easyMode)
 
     def youWin(self):
         self.currentWorld = YouWinWorld(self,self.surface)
@@ -84,22 +87,33 @@ class YouWinWorld(TitleWorld):
         super(YouWinWorld,self).__init__(game,surface,"You Win! Congratulations.")
 
 class GameWorld(object):
-    def __init__(self,game,surface):
+    DEAD_CENTRE_THRESHOLD = math.pi / 64
+    CENTRE_THRESHOLD = math.pi / 16
+    SIDE_THRESHOLD = math.pi / 6
+
+    def __init__(self,game,surface, easyMode=False):
         self.game = game
         self.surface = surface
+        self.easyMode = easyMode
+
         self.spaceship = Spaceship(self,(320,240))
         self.bullets = []
         self.asteroids = []
-        self.populateAsteroids()
+        if not self.easyMode:
+            self.populateAsteroids()
         self.points = 0
 
         self.scoreFont = pygame.font.Font(None, 14)
 
-
     def populateAsteroids(self):
         numAsteroids = 10
-        for x in range(numAsteroids):
-            self.addAsteroid(Asteroid(self,(random.randint(0,self.surface.get_width()),random.randint(0,self.surface.get_height())),30))
+        for _ in range(numAsteroids):
+            x = random.randint(0,self.surface.get_width())
+            y = random.randint(0,self.surface.get_height())
+            
+            size = 30
+            
+            self.addAsteroid( Asteroid(self, (x, y), size) )
     
     def addBullet(self,bullet):
         self.bullets.append(bullet)
@@ -168,11 +182,58 @@ class GameWorld(object):
                         break
                 b.update()
 
-        if self.asteroids == []:
+        if self.asteroids == [] and not self.easyMode:
             self.game.youWin()
         else:
             for i,x in enumerate(self.asteroids):
                 x.update()
+
+    def sense(self):
+        # generate percepts for QuLog or the like
+        percepts = set()
+        ship_direction = self.spaceship.direction % (math.pi * 2)
+        speed = self.spaceship.getSpeed()
+
+        for j,a in enumerate(self.asteroids):
+            dx = self.spaceship.x-a.x
+            dy = self.spaceship.y-a.y
+
+            dist = math.sqrt((dx)**2+(dy)**2)
+            asteroid_direction = np.tan(dy / dx)
+
+            relative_direction = (asteroid_direction - ship_direction) % (math.pi * 2)
+
+            # can the spaceship see the asteroid?
+            if dist > 300 or \
+               (relative_direction > GameWorld.SIDE_THRESHOLD and relative_direction < math.pi * 2 - GameWorld.SIDE_THRESHOLD):
+                # behind / not seen
+                pass
+            else:
+                # then it is seen
+                # translate these pi values into something more human-readable
+                if ( relative_direction <= GameWorld.DEAD_CENTRE_THRESHOLD and relative_direction >= 0) or \
+                    (relative_direction >= math.pi * 2 - GameWorld.DEAD_CENTRE_THRESHOLD and relative_direction < math.pi * 2):
+                    # dead centre
+                    percept_direction = "dead_centre"
+                elif ( relative_direction <= GameWorld.CENTRE_THRESHOLD and relative_direction >= 0) or \
+                    (relative_direction >= math.pi * 2 - GameWorld.CENTRE_THRESHOLD and relative_direction < math.pi * 2):
+                    # centre
+                    percept_direction = "centre"
+                elif relative_direction > GameWorld.CENTRE_THRESHOLD and relative_direction <= GameWorld.SIDE_THRESHOLD:
+                    # right
+                    percept_direction = "right"
+                elif relative_direction < math.pi * 2 - GameWorld.CENTRE_THRESHOLD and relative_direction >= math.pi * 2 - GameWorld.SIDE_THRESHOLD:
+                    # left
+                    percept_direction = "left"
+
+                percepts.add( ("see", ("asteroid", percept_direction, int(dist))) )
+                # add percept
+
+        percepts.add( ("facing_direction",(ship_direction,)) )
+        percepts.add( ("speed", (speed,)) )
+
+        return percepts
+
 
 class Actor(object):
     def __init__(self,world,(x,y),(speed,direction)):
@@ -254,7 +315,9 @@ class Spaceship(object):
         
         self.move()
         self.draw()
-        
+    
+    def getSpeed(self):
+        return math.sqrt(self.vx * self.vx + self.vy * self.vy)
         
     def rotClockwise(self):
         self.rotateWithMatrix(self.clockwiseRotMatrix)
@@ -294,11 +357,14 @@ class Spaceship(object):
 
 
 class Bullet(Actor):
-    def __init__(self,world,(x,y),direction):
-        super(Bullet,self).__init__(world,(x,y),(15,direction))
+    BULLET_AGE = 20
+    BULLET_LENGTH = 10
 
-        self.age = 20
-        self.length = 10
+    def __init__(self,world,(x,y),direction):
+        super(Bullet,self).__init__(world,(x,y),(18 + random.random() * 2,direction))
+
+        self.age = Bullet.BULLET_AGE
+        self.length = Bullet.BULLET_LENGTH
 
     def draw(self):
         pygame.draw.line(self.world.surface, redColor, (self.x,self.y),(self.x + self.length * math.cos(self.direction), self.y + self.length * math.sin(self.direction)))
@@ -317,13 +383,30 @@ class Asteroid(Actor):
     def draw(self):
         pygame.draw.circle(self.world.surface, blueColor, (int(self.x),int(self.y)),self.size,1)
 
-game = Game(windowSurfObj)
 
-while True:
-    game.currentWorld.handleEvents(pygame.event.get())
-                
-    
-    game.currentWorld.update()
-    
-    pygame.display.update()
-    fpsClock.tick(60)
+def main():
+    game = Game(windowSurfObj,easyMode=False)
+
+    percepts = set()
+
+    while True:
+        game.currentWorld.handleEvents(pygame.event.get())
+
+        game.currentWorld.update()
+
+        if type(game.currentWorld) is GameWorld:
+            # sense
+            new_percepts = game.currentWorld.sense()
+
+            print "+: ", percepts - new_percepts
+            print "-: ", new_percepts - percepts
+            print ""
+            # print "same:", percepts & new_percepts
+
+            percepts = new_percepts
+
+        pygame.display.update()
+        fpsClock.tick(60)
+
+if __name__ == '__main__':
+    main()
