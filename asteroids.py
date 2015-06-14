@@ -66,7 +66,7 @@ class PausedWorld(object):
 class TitleWorld(PausedWorld):
     def __init__(self,game,surface,text):
         super(TitleWorld,self).__init__(game,surface)
-        
+
         self.titleFont = pygame.font.Font(None,36)
         self.drawTitle(text)
 
@@ -76,7 +76,7 @@ class TitleWorld(PausedWorld):
 class IntroWorld(TitleWorld):
     def __init__(self,game,surface):
         super(IntroWorld,self).__init__(game,surface,"Asteroids! By Bob Webb")
-        
+
 
 class YouLoseWorld(TitleWorld):
     def __init__(self,game,surface):
@@ -110,11 +110,11 @@ class GameWorld(object):
         for _ in range(numAsteroids):
             x = random.randint(0,self.surface.get_width())
             y = random.randint(0,self.surface.get_height())
-            
+
             size = 30
-            
+
             self.addAsteroid( Asteroid(self, (x, y), size) )
-    
+
     def addBullet(self,bullet):
         self.bullets.append(bullet)
 
@@ -153,22 +153,22 @@ class GameWorld(object):
 
     def update(self):
         self.surface.fill(blackColor)
-        
+
         self.spaceship.update()
 
         self.surface.blit(self.scoreFont.render("Current points: "+str(self.points), False, greenColor),(20,20))
-        
+
         for i,v in enumerate(self.spaceship.shape):
             for j,a in enumerate(self.asteroids):
                 dist = math.sqrt((v[0]+self.spaceship.x-a.x)**2+(v[1]+self.spaceship.y-a.y)**2)
                 if dist < a.size:
                     #print "YOU LOOOOSE"
                     self.game.youLose()
-        
+
         for i,b in enumerate(self.bullets):
             if b.age == 0:
                 self.bullets.remove(b)
-            else:            
+            else:
                 for j,a in enumerate(self.asteroids):
                     dist = math.sqrt((b.x-a.x)**2+(b.y-a.y)**2)
                     if dist < a.size: # asteroid hit!!!!
@@ -270,17 +270,17 @@ class Spaceship(object):
 
         self.ax = 0
         self.ay = 0
-        
+
         self.shape =    [[ 10.0 , 10.0],
                          [-10.0 , 10.0],
                          [ 0.0  ,-20.0]]
-        
+
         # code for handling translation!
         self.acc = 0.2
         self.isMovingForwards = False
         self.isMovingBackwards = False
         self.decelRatio = 0.99
-        
+
         # code for handling rotation!
         self.rads = math.pi/40
         self.direction = 1.5*math.pi
@@ -293,16 +293,16 @@ class Spaceship(object):
                                [math.sin(-self.rads), math.cos(-self.rads)]]
 
         self.isShooting = False
-        
+
     def draw(self):
         pygame.draw.polygon(self.world.surface,greenColor,translateVectors(self.shape,self.x,self.y),1)
-    
+
     def update(self):
         if self.isRotatingClockwise:
             self.rotClockwise()
         elif self.isRotatingAntiClockwise:
             self.rotAntiClockwise()
-        
+
         if self.isMovingForwards:
             self.forwardsForce()
         elif self.isMovingBackwards:
@@ -312,18 +312,18 @@ class Spaceship(object):
             self.shoot()
 
         self.decelerate()
-        
+
         self.move()
         self.draw()
-    
+
     def getSpeed(self):
         return math.sqrt(self.vx * self.vx + self.vy * self.vy)
-        
+
     def rotClockwise(self):
         self.rotateWithMatrix(self.clockwiseRotMatrix)
         self.direction += self.rads
         self.calcAcceleration()
-        
+
     def rotAntiClockwise(self):
         self.rotateWithMatrix(self.antiClockwiseRotMatrix)
         self.direction -= self.rads
@@ -377,7 +377,7 @@ class Bullet(Actor):
 class Asteroid(Actor):
     def __init__(self,world,(x,y),size):
         super(Asteroid,self).__init__(world,(x,y),(1,random.uniform(0,math.pi*2)))
-        
+
         self.size = size
 
     def draw(self):
