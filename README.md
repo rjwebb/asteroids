@@ -5,7 +5,8 @@ An Asteroids clone written in Python with Pygame.
 
 Press up/down/left/right to move around and A to fire.
 
-Recent addition:
+Teleo-reactive programming
+--------------------------
 
 If you have QuLog and Pedro installed, you can write a teleo-reactive program that plays the game for you.
 
