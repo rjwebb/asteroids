@@ -17,8 +17,8 @@ To run asteroids in TR mode:
 1. Open a shell, run 'pedro'
 2. Open another shell in this directory, run 'python asteroids.py'
 3. Open another shell in this directory, run 'qulog'
-    a. A prompt should appear. Enter the command 'consult asteroids.'
-    b. Enter the command 'teleor.' (to begin teleo-reactive mode).
-    c. Enter the command 'go().' (to start the actual TR program).
+    1. A prompt should appear. Enter the command 'consult asteroids.'
+    2. Enter the command 'teleor.' (to begin teleo-reactive mode).
+    3. Enter the command 'go().' (to start the actual TR program).
 
 DISCLAIMER: this is all a work-in-progress, run at your own risk
