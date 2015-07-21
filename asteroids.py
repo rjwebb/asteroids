@@ -1,11 +1,23 @@
 #!/bin/python
 # Asteroids game!!
-import pygame, sys, math, random
-from pygame.locals import *
 
+# game stuff
+import pygame
+from pygame.locals import *
+import sys
+import math
+import random
 import numpy as np
 
+# pedro stuff
+import pedroclient
+
+import threading
+import Queue 
+
+
 pygame.init()
+
 fpsClock = pygame.time.Clock()
 
 redColor = pygame.Color(255,0,0)
@@ -32,33 +44,63 @@ def check (font, name):
         bold = "bold"
     print "%s at %s is %s" % (name, font, bold)
 
+def myround(x, prec=2, base=.05):
+  return round(base * round(float(x)/base),prec)
+
+def format_percept( (functor, args) ):
+    arg_str = ",".join([str(a) for a in args])
+    return functor + "(" + arg_str + ")"
+
 class Game(object):
-    def __init__(self,surface,easyMode=False):
+    def __init__(self,surface,easyMode=False, splashScreen=True):
         self.surface = surface
-        self.currentWorld = IntroWorld(self,self.surface)
         self.easyMode = easyMode
+        self.splashScreen = splashScreen
+
+        if self.splashScreen:
+            self.currentWorld = IntroWorld(self,self.surface)
+        else:
+            self.currentWorld = GameWorld(self,self.surface,easyMode=self.easyMode)
 
     def startGame(self):
         self.currentWorld = GameWorld(self,self.surface,easyMode=self.easyMode)
 
     def youWin(self):
-        self.currentWorld = YouWinWorld(self,self.surface)
+        if self.splashScreen:
+            self.currentWorld = YouWinWorld(self,self.surface)
+        else:
+            self.currentWorld = GameWorld(self,self.surface,easyMode=self.easyMode)
 
     def youLose(self):
-        self.currentWorld = YouLoseWorld(self,self.surface)
+        if self.splashScreen:
+            self.currentWorld = YouLoseWorld(self,self.surface)
+        else:
+            self.currentWorld = GameWorld(self,self.surface,easyMode=self.easyMode)
 
 class PausedWorld(object):
     def __init__(self,game,surface):
         self.game = game
         self.surface = surface
 
-    def handleEvents(self,events):
+    def handleEvents(self,events, actions):
         for event in events:
             if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
+                actions.add("quit")
             elif event.type == KEYDOWN:
-                self.game.startGame()
+                if event.key == K_ESCAPE:
+                    pygame.event.post(pygame.event.Event(QUIT))
+                actions.add("start_game")
+
+        return actions
+
+    def handleActions(self,actions):
+        if "quit" in actions:
+            pygame.quit()
+            sys.exit()
+        
+        if "start_game" in actions:
+            self.game.startGame()
+
 
     def update(self):
         pass
@@ -105,6 +147,8 @@ class GameWorld(object):
 
         self.scoreFont = pygame.font.Font(None, 14)
 
+        self.justInstantiated = True
+
     def populateAsteroids(self):
         numAsteroids = 10
         for _ in range(numAsteroids):
@@ -121,35 +165,74 @@ class GameWorld(object):
     def addAsteroid(self,asteroid):
         self.asteroids.append(asteroid)
 
-    def handleEvents(self,events):
+    def handleEvents(self, events, actions):
+        if self.justInstantiated:
+            actions = set([])
+            self.justInstantiated = False
+
         for event in events:
             if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
+                actions.add("quit")
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     pygame.event.post(pygame.event.Event(QUIT))
                 elif event.key == K_LEFT:
-                    self.spaceship.isRotatingAntiClockwise = True
+                    actions.add("turn_left")
                 elif event.key == K_RIGHT:
-                    self.spaceship.isRotatingClockwise = True
+                    actions.add("turn_right")
                 elif event.key == K_UP:
-                    self.spaceship.isMovingForwards = True
+                    actions.add("move_forward")
                 elif event.key == K_DOWN:
-                    self.spaceship.isMovingBackwards = True
+                    actions.add("move_backward")
                 elif event.key == K_a:
-                    self.spaceship.isShooting = True
+                    actions.add("shoot")
+                elif event.key == K_c:
+                    actions.add("clear")
             elif event.type == KEYUP:
                 if event.key == K_LEFT:
-                    self.spaceship.isRotatingAntiClockwise = False
+                    actions.discard("turn_left")
                 elif event.key == K_RIGHT:
-                    self.spaceship.isRotatingClockwise = False
+                    actions.discard("turn_right")
                 elif event.key == K_UP:
-                    self.spaceship.isMovingForwards = False
+                    actions.discard("move_forward")
                 elif event.key == K_DOWN:
-                    self.spaceship.isMovingBackwards = False
+                    actions.discard("move_backward")
                 elif event.key == K_a:
-                    self.spaceship.isShooting = False
+                    actions.discard("shoot")
+                elif event.key == K_c:
+                    actions.discard("clear")
+        return actions
+
+    def handleActions(self, actions):
+        if "quit" in actions:
+            pygame.quit()
+            sys.exit()
+
+        if "turn_left" in actions:
+            self.spaceship.isRotatingAntiClockwise = True
+            self.spaceship.isRotatingClockwise = False
+        elif "turn_right" in actions:
+            self.spaceship.isRotatingAntiClockwise = False
+            self.spaceship.isRotatingClockwise = True    
+        else:
+            self.spaceship.isRotatingAntiClockwise = False
+            self.spaceship.isRotatingClockwise = False
+
+        if "move_forward" in actions:
+            self.spaceship.isMovingForwards = True
+            self.spaceship.isMovingBackwards = False
+        elif "move_backward" in actions:
+            self.spaceship.isMovingForwards = False
+            self.spaceship.isMovingBackwards = True
+        else:
+            self.spaceship.isMovingForwards = False
+            self.spaceship.isMovingBackwards = False
+
+        if "shoot" in actions:
+            self.spaceship.isShooting = True
+        else:
+            self.spaceship.isShooting = False
+
 
     def update(self):
         self.surface.fill(blackColor)
@@ -191,8 +274,8 @@ class GameWorld(object):
     def sense(self):
         # generate percepts for QuLog or the like
         percepts = set()
-        ship_direction = self.spaceship.direction % (math.pi * 2)
-        speed = self.spaceship.getSpeed()
+        ship_direction = myround(self.spaceship.direction % (math.pi * 2), base=0.05)
+        speed = myround(self.spaceship.getSpeed(), base=0.1)
 
         for j,a in enumerate(self.asteroids):
             dx = self.spaceship.x-a.x
@@ -294,6 +377,8 @@ class Spaceship(object):
 
         self.isShooting = False
 
+        self.calcAcceleration()
+
     def draw(self):
         pygame.draw.polygon(self.world.surface,greenColor,translateVectors(self.shape,self.x,self.y),1)
 
@@ -384,29 +469,122 @@ class Asteroid(Actor):
         pygame.draw.circle(self.world.surface, blueColor, (int(self.x),int(self.y)),self.size,1)
 
 
-def main():
-    game = Game(windowSurfObj,easyMode=False)
+DELAY = 500
+
+# In this case we want to respond in some way immediately a message arrives
+# We do this below using a thread. Depending on the application this might
+# instead create an event.
+# The other approach (see Pedro documentation on Python API) is to set up
+# the connection for async comms and then use notification_ready() to
+# see if there are message to process 
+class MessageThread(threading.Thread):
+    def __init__(self, parent):
+        self.running = True
+        self.parent = parent
+        threading.Thread.__init__(self)
+        self.daemon = True
+        
+    def run(self):
+        while self.running:
+            p2pmsg = self.parent.client.get_term()[0]
+            # get the message
+            message = p2pmsg.args[2]
+            print message
+            if str(message) == 'initialise_':
+                # get the sender address
+                percepts_addr = p2pmsg.args[1]
+                self.parent.set_client(percepts_addr)
+            self.parent.message_queue.put(str(message)+'\n')
+            
+    def stop(self):
+        self.running = False
+
+
+def send_message(client, addr, percept_text):
+    if addr is None:
+#        print "No agent connected"
+        pass
+    else:
+        # send percepts
+        if client.p2p(addr, percept_text) == 0:
+            print "Illegal percepts message"
+
+def main(using_pedro=False):
+    splashScreen = not using_pedro
+
+    game = Game(windowSurfObj,easyMode=False, splashScreen=splashScreen)
 
     percepts = set()
 
+    if using_pedro:
+        host = "localhost"
+        shell_name = "asteroids"
+
+        client = pedroclient.PedroClient()
+        c = client.register(shell_name)
+        print "registered?  "+ str(c)
+    
+        tr_client_addr = None
+
+        percept_actions = set()
+
+    user_actions = set()
+
     while True:
-        game.currentWorld.handleEvents(pygame.event.get())
-
-        game.currentWorld.update()
-
         if type(game.currentWorld) is GameWorld:
+            user_actions.discard("start_game")
+
+        if using_pedro and type(game.currentWorld) is GameWorld:
             # sense
             new_percepts = game.currentWorld.sense()
-
-            print "+: ", percepts - new_percepts
-            print "-: ", new_percepts - percepts
-            print ""
-            # print "same:", percepts & new_percepts
-
             percepts = new_percepts
+            
+            percept_string = "[" + ",".join(map(format_percept, percepts)) + "]"
 
+            send_message(client, tr_client_addr, percept_string)
+
+            if client.notification_ready():
+                m = client.get_term()
+                p2pmsg = m[0]
+                message = p2pmsg.args[2]
+                print message
+                if str(message) == 'initialise_':
+                    # get the sender address
+                    percepts_addr = p2pmsg.args[1]
+                    tr_client_addr = percepts_addr
+                    percept_actions = set()
+
+                elif str(message.functor) == 'controls': # was sent actions to perform
+                    r = message.args[0]
+                    
+                    if type(r) == pedroclient.PList:
+                        rec_actions = r.toList()
+                        for action in rec_actions:
+                            a = str(action.args[0])
+
+                            if str(action.functor) == 'start_':
+                                percept_actions.add(a)
+                            elif str(action.functor) == 'stop_':
+                                percept_actions.discard(a)
+                    elif type(r) == pedroclient.PAtom:
+                        pass
+                    else:
+                        raise Exception("invalid message received")
+
+        user_actions = game.currentWorld.handleEvents(pygame.event.get(), user_actions)
+
+        if "clear" in user_actions:
+            percept_actions = set()
+
+        if using_pedro:
+            actions = percept_actions | user_actions
+        else:
+            actions = user_actions
+
+        game.currentWorld.handleActions(actions)
+        game.currentWorld.update()
         pygame.display.update()
         fpsClock.tick(60)
 
 if __name__ == '__main__':
-    main()
+    main(using_pedro=False)
