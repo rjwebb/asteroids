@@ -282,6 +282,7 @@ class GameWorld(object):
             dy = self.spaceship.y-a.y
 
             dist = math.sqrt((dx)**2+(dy)**2)
+
             asteroid_direction = np.tan(dy / dx)
 
             relative_direction = (asteroid_direction - ship_direction) % (math.pi * 2)
@@ -587,4 +588,4 @@ def main(using_pedro=False):
         fpsClock.tick(60)
 
 if __name__ == '__main__':
-    main(using_pedro=False)
+    main(using_pedro=True)

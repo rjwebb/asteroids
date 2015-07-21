@@ -1,0 +1,35 @@
+percept
+    facing_direction : (num),
+    speed : (num)
+
+durative
+    turn_left : (),
+    turn_right : (),
+    move_forward : (),
+    move_backward : (),
+    shoot : ()
+
+
+top_task : () ~>
+top_task {
+    true ~> shoot_left for 1; shoot_right for 1
+}
+
+shoot_left : () ~>
+shoot_left {
+    facing_direction(X) & X > 3.14 ~> turn_left, shoot
+    facing_direction(X) & X =< 3.14 ~> turn_right, shoot
+    true ~> ()
+}
+
+shoot_right : () ~>
+shoot_right {
+    facing_direction(X) & X > 3.14 ~> turn_right, shoot
+    facing_direction(X) & X =< 3.14 ~> turn_left, shoot
+    true ~> ()
+}
+
+go : () ~>>
+go() ~>>
+    start_agent thingy asteroids@localhost all ; 
+    start_task thingy top_task
