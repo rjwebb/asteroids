@@ -1,6 +1,22 @@
 #!/bin/python
 # Asteroids game!!
 
+"""
+
+Percepts:
+see(Thing, Direction, Distance)
+Thing is only going to be "asteroid" in this case
+Direction can be left, right, centre or dead_centre
+Distance is how far away the thing is
+
+facing_direction(Direction)
+the absolute direction that the spaceship is facing in (in radians)
+
+speed(Speed)
+the velocity at which the spaceship is travelling, in the direction given by facing_direction
+
+"""
+
 # game stuff
 import pygame
 from pygame.locals import *
@@ -16,6 +32,10 @@ import threading
 import Queue 
 
 
+
+# constants
+FRAMES_PER_SECOND = 120
+
 pygame.init()
 
 fpsClock = pygame.time.Clock()
@@ -23,6 +43,7 @@ fpsClock = pygame.time.Clock()
 redColor = pygame.Color(255,0,0)
 greenColor = pygame.Color(0,255,0)
 blueColor = pygame.Color(0,0,255)
+whiteColor = pygame.Color(255,255,255)
 blackColor = pygame.Color(0,0,0)
 
 windowSurfObj = pygame.display.set_mode((640,480))
@@ -131,7 +152,8 @@ class YouWinWorld(TitleWorld):
 class GameWorld(object):
     DEAD_CENTRE_THRESHOLD = math.pi / 64
     CENTRE_THRESHOLD = math.pi / 16
-    SIDE_THRESHOLD = math.pi / 6
+    #SIDE_THRESHOLD = math.pi / 6
+    SIDE_THRESHOLD = math.pi / 4
 
     def __init__(self,game,surface, easyMode=False):
         self.game = game
@@ -150,7 +172,7 @@ class GameWorld(object):
         self.justInstantiated = True
 
     def populateAsteroids(self):
-        numAsteroids = 10
+        numAsteroids = 5
         for _ in range(numAsteroids):
             x = random.randint(0,self.surface.get_width())
             y = random.randint(0,self.surface.get_height())
@@ -274,17 +296,16 @@ class GameWorld(object):
     def sense(self):
         # generate percepts for QuLog or the like
         percepts = set()
-        ship_direction = myround(self.spaceship.direction % (math.pi * 2), base=0.05)
+        ship_direction = self.spaceship.direction
         speed = myround(self.spaceship.getSpeed(), base=0.1)
 
         for j,a in enumerate(self.asteroids):
-            dx = self.spaceship.x-a.x
-            dy = self.spaceship.y-a.y
+            dx = a.x - self.spaceship.x
+            dy = a.y - self.spaceship.y
 
             dist = math.sqrt((dx)**2+(dy)**2)
 
-            asteroid_direction = np.tan(dy / dx)
-
+            asteroid_direction = np.arctan2(dy, dx) % (math.pi * 2)
             relative_direction = (asteroid_direction - ship_direction) % (math.pi * 2)
 
             # can the spaceship see the asteroid?
@@ -366,7 +387,7 @@ class Spaceship(object):
         self.decelRatio = 0.99
 
         # code for handling rotation!
-        self.rads = math.pi/40
+        self.rads = math.pi/20
         self.direction = 1.5*math.pi
         self.isRotatingClockwise = False
         self.isRotatingAntiClockwise = False
@@ -407,12 +428,12 @@ class Spaceship(object):
 
     def rotClockwise(self):
         self.rotateWithMatrix(self.clockwiseRotMatrix)
-        self.direction += self.rads
+        self.direction = (self.direction + self.rads) % (math.pi * 2)
         self.calcAcceleration()
 
     def rotAntiClockwise(self):
         self.rotateWithMatrix(self.antiClockwiseRotMatrix)
-        self.direction -= self.rads
+        self.direction = (self.direction - self.rads) % (math.pi * 2)
         self.calcAcceleration()
 
     def calcAcceleration(self):
@@ -463,11 +484,10 @@ class Bullet(Actor):
 class Asteroid(Actor):
     def __init__(self,world,(x,y),size):
         super(Asteroid,self).__init__(world,(x,y),(1,random.uniform(0,math.pi*2)))
-
         self.size = size
 
     def draw(self):
-        pygame.draw.circle(self.world.surface, blueColor, (int(self.x),int(self.y)),self.size,1)
+        pygame.draw.circle(self.world.surface, whiteColor, (int(self.x),int(self.y)),self.size,1)
 
 
 DELAY = 500
@@ -541,14 +561,13 @@ def main(using_pedro=False):
             percepts = new_percepts
             
             percept_string = "[" + ",".join(map(format_percept, percepts)) + "]"
-
+            print percept_string
             send_message(client, tr_client_addr, percept_string)
 
             if client.notification_ready():
                 m = client.get_term()
                 p2pmsg = m[0]
                 message = p2pmsg.args[2]
-                print message
                 if str(message) == 'initialise_':
                     # get the sender address
                     percepts_addr = p2pmsg.args[1]
@@ -585,7 +604,7 @@ def main(using_pedro=False):
         game.currentWorld.handleActions(actions)
         game.currentWorld.update()
         pygame.display.update()
-        fpsClock.tick(60)
+        fpsClock.tick(FRAMES_PER_SECOND)
 
 if __name__ == '__main__':
     main(using_pedro=True)
