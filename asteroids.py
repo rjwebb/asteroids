@@ -42,6 +42,7 @@ fpsClock = pygame.time.Clock()
 
 redColor = pygame.Color(255,0,0)
 greenColor = pygame.Color(0,255,0)
+darkGreenColor = pygame.Color(0,102,0)
 blueColor = pygame.Color(0,0,255)
 whiteColor = pygame.Color(255,255,255)
 blackColor = pygame.Color(0,0,0)
@@ -51,6 +52,25 @@ windowSurfObj = pygame.display.set_mode((640,480))
 pygame.display.set_caption("Asteroids")
 
 windowSurfObj.fill(blackColor)
+
+nightColourPalette = { 
+    "background" : blackColor, 
+    "spaceship" : greenColor, 
+    "asteroid" : whiteColor, 
+    "bullet" : redColor,
+    "display" : greenColor
+}
+
+dayColourPalette = {
+    "background" : whiteColor, 
+    "spaceship" : darkGreenColor, 
+    "asteroid" : blueColor, 
+    "bullet" : redColor,
+    "display" : darkGreenColor
+}
+
+CURRENT_COLOURS = dayColourPalette
+#CURRENT_COLOURS = nightColourPalette
 
 def translateVectors(vec,x,y):
     return [[v[0]+x,v[1]+y] for v in vec]
@@ -134,7 +154,7 @@ class TitleWorld(PausedWorld):
         self.drawTitle(text)
 
     def drawTitle(self,text):
-        self.surface.blit(self.titleFont.render(text, False, greenColor),(200,200))
+        self.surface.blit(self.titleFont.render(text, False, CURRENT_COLOURS["display"]),(200,200))
 
 class IntroWorld(TitleWorld):
     def __init__(self,game,surface):
@@ -257,11 +277,11 @@ class GameWorld(object):
 
 
     def update(self):
-        self.surface.fill(blackColor)
+        self.surface.fill(CURRENT_COLOURS["background"])
 
         self.spaceship.update()
 
-        self.surface.blit(self.scoreFont.render("Current points: "+str(self.points), False, greenColor),(20,20))
+        self.surface.blit(self.scoreFont.render("Current points: "+str(self.points), False, CURRENT_COLOURS["display"]),(20,20))
 
         for i,v in enumerate(self.spaceship.shape):
             for j,a in enumerate(self.asteroids):
@@ -402,7 +422,7 @@ class Spaceship(object):
         self.calcAcceleration()
 
     def draw(self):
-        pygame.draw.polygon(self.world.surface,greenColor,translateVectors(self.shape,self.x,self.y),1)
+        pygame.draw.polygon(self.world.surface,CURRENT_COLOURS["spaceship"],translateVectors(self.shape,self.x,self.y),0)
 
     def update(self):
         if self.isRotatingClockwise:
@@ -474,7 +494,7 @@ class Bullet(Actor):
         self.length = Bullet.BULLET_LENGTH
 
     def draw(self):
-        pygame.draw.line(self.world.surface, redColor, (self.x,self.y),(self.x + self.length * math.cos(self.direction), self.y + self.length * math.sin(self.direction)))
+        pygame.draw.line(self.world.surface, CURRENT_COLOURS["bullet"], (self.x,self.y),(self.x + self.length * math.cos(self.direction), self.y + self.length * math.sin(self.direction)))
 
     def update(self):
         super(Bullet,self).update()
@@ -487,7 +507,7 @@ class Asteroid(Actor):
         self.size = size
 
     def draw(self):
-        pygame.draw.circle(self.world.surface, whiteColor, (int(self.x),int(self.y)),self.size,1)
+        pygame.draw.circle(self.world.surface, CURRENT_COLOURS["asteroid"], (int(self.x),int(self.y)),self.size,1)
 
 
 DELAY = 500
