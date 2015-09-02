@@ -34,7 +34,7 @@ import Queue
 
 
 # constants
-FRAMES_PER_SECOND = 120
+FRAMES_PER_SECOND = 50
 
 pygame.init()
 
@@ -187,7 +187,7 @@ class GameWorld(object):
             self.populateAsteroids()
         self.points = 0
 
-        self.scoreFont = pygame.font.Font(None, 14)
+        self.scoreFont = pygame.font.Font(None, 18)
 
         self.justInstantiated = True
 
