@@ -510,7 +510,7 @@ class MessageThread(threading.Thread):
             p2pmsg = self.parent.client.get_term()[0]
             # get the message
             message = p2pmsg.args[2]
-            print message
+            # print message
             if str(message) == 'initialise_':
                 # get the sender address
                 percepts_addr = p2pmsg.args[1]
@@ -561,7 +561,7 @@ def main(using_pedro=False):
             percepts = new_percepts
             
             percept_string = "[" + ",".join(map(format_percept, percepts)) + "]"
-            print percept_string
+            #print percept_string
             send_message(client, tr_client_addr, percept_string)
 
             if client.notification_ready():
