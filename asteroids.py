@@ -384,10 +384,10 @@ class Spaceship(object):
         self.acc = 0.2
         self.isMovingForwards = False
         self.isMovingBackwards = False
-        self.decelRatio = 0.99
+        self.decelRatio = 0.97
 
         # code for handling rotation!
-        self.rads = math.pi/20
+        self.rads = math.pi/60
         self.direction = 1.5*math.pi
         self.isRotatingClockwise = False
         self.isRotatingAntiClockwise = False
