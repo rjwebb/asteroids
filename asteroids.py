@@ -47,7 +47,8 @@ blueColor = pygame.Color(0,0,255)
 whiteColor = pygame.Color(255,255,255)
 blackColor = pygame.Color(0,0,0)
 
-windowSurfObj = pygame.display.set_mode((640,480))
+width, height = 640, 480
+windowSurfObj = pygame.display.set_mode((width,height))
 
 pygame.display.set_caption("Asteroids")
 
