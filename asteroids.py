@@ -18,6 +18,7 @@ the velocity at which the spaceship is travelling, in the direction given by fac
 """
 
 # game stuff
+import colors
 import pygame
 from pygame.locals import *
 import sys
@@ -40,38 +41,15 @@ pygame.init()
 
 fpsClock = pygame.time.Clock()
 
-redColor = pygame.Color(255,0,0)
-greenColor = pygame.Color(0,255,0)
-darkGreenColor = pygame.Color(0,102,0)
-blueColor = pygame.Color(0,0,255)
-whiteColor = pygame.Color(255,255,255)
-blackColor = pygame.Color(0,0,0)
 
 width, height = 640, 480
 windowSurfObj = pygame.display.set_mode((width,height))
 
 pygame.display.set_caption("Asteroids")
 
-windowSurfObj.fill(blackColor)
+CURRENT_COLOURS = colors.dayColourPalette
+windowSurfObj.fill(CURRENT_COLOURS['background'])
 
-nightColourPalette = { 
-    "background" : blackColor, 
-    "spaceship" : greenColor, 
-    "asteroid" : whiteColor, 
-    "bullet" : redColor,
-    "display" : greenColor
-}
-
-dayColourPalette = {
-    "background" : whiteColor, 
-    "spaceship" : darkGreenColor, 
-    "asteroid" : blueColor, 
-    "bullet" : redColor,
-    "display" : darkGreenColor
-}
-
-CURRENT_COLOURS = dayColourPalette
-#CURRENT_COLOURS = nightColourPalette
 
 def translateVectors(vec,x,y):
     return [[v[0]+x,v[1]+y] for v in vec]
