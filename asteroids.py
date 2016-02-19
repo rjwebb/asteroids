@@ -35,23 +35,8 @@ import threading
 import Queue 
 
 
-
-# constants
-FRAMES_PER_SECOND = 50
-
-pygame.init()
-
-fpsClock = pygame.time.Clock()
-
-
-width, height = 640, 480
-windowSurfObj = pygame.display.set_mode((width,height))
-
-pygame.display.set_caption("Asteroids")
-
 CURRENT_COLOURS = colors.dayColourPalette
-windowSurfObj.fill(CURRENT_COLOURS['background'])
-
+FRAMES_PER_SECOND = 50
 
 def translateVectors(vec,x,y):
     return [[v[0]+x,v[1]+y] for v in vec]
@@ -155,6 +140,7 @@ class GameWorld(object):
     CENTRE_THRESHOLD = math.pi / 16
     #SIDE_THRESHOLD = math.pi / 6
     SIDE_THRESHOLD = math.pi / 4
+
 
     def __init__(self,game,surface, easyMode=False):
         self.game = game
@@ -532,6 +518,17 @@ def send_message(client, addr, percept_text):
             print "Illegal percepts message"
 
 def main(using_pedro=False, shell_name="asteroids"):
+    pygame.init()
+
+    fpsClock = pygame.time.Clock()
+
+    width, height = 640, 480
+    windowSurfObj = pygame.display.set_mode((width,height))
+
+    pygame.display.set_caption("Asteroids")
+
+    windowSurfObj.fill(CURRENT_COLOURS['background'])
+
     splashScreen = not using_pedro
 
     game = Game(windowSurfObj,easyMode=False, splashScreen=splashScreen)
