@@ -29,6 +29,8 @@ import numpy as np
 # pedro stuff
 import pedroclient
 
+# general stuff
+import argparse
 import threading
 import Queue 
 
@@ -529,7 +531,7 @@ def send_message(client, addr, percept_text):
         if client.p2p(addr, percept_text) == 0:
             print "Illegal percepts message"
 
-def main(using_pedro=False):
+def main(using_pedro=False, shell_name="asteroids"):
     splashScreen = not using_pedro
 
     game = Game(windowSurfObj,easyMode=False, splashScreen=splashScreen)
@@ -537,9 +539,6 @@ def main(using_pedro=False):
     percepts = set()
 
     if using_pedro:
-        host = "localhost"
-        shell_name = "asteroids"
-
         client = pedroclient.PedroClient()
         c = client.register(shell_name)
         print "registered?  "+ str(c)
@@ -606,4 +605,14 @@ def main(using_pedro=False):
         fpsClock.tick(FRAMES_PER_SECOND)
 
 if __name__ == '__main__':
-    main(using_pedro=True)
+    parser = argparse.ArgumentParser(description="An Asteroids game.")
+
+    parser.add_argument('--pedro', dest='pedro', action='store_true',
+                        help='use the Pedro communications service to connect to QuLog \
+                        to play this game automatically.')
+    parser.add_argument('--shell', dest='shell',
+                        help='the name of the shell to use with Pedro')
+
+    args = parser.parse_args()
+
+    main(using_pedro=args.pedro, shell_name=args.shell)
